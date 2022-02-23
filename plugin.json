@@ -1,0 +1,16 @@
+{
+    "name": "Event Filter",
+    "url": "https://github.com/GoPreki/posthog-event-filter-plugin",
+    "description": "Stop storing specified events",
+    "main": "src/index.ts",
+    "posthogVersion": ">= 1.24.0",
+    "config": [
+        {
+            "key": "events",
+            "hint": "Stop storing the events under the specified event names. For multplie values, separate them using commas.",
+            "name": "Event names to filter",
+            "type": "string",
+            "required": true
+        }
+    ]
+}
