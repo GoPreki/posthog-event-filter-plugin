@@ -5,12 +5,12 @@ export function setupPlugin({ config, global }: PluginMeta): void {
     if (!config.events || eventNames.some((name: string) => !name)) {
         throw new Error('Event Names can not be empty')
     }
-    global.event = eventNames
+    global.events = eventNames
 }
 
 // /* Runs on every event */
 export function processEvent(event: PluginEvent, { global }: PluginMeta): PluginEvent | null {
-    if (event.event in global.events) {
+    if (global.events.includes(event.event)) {
         return null;
     }
 
