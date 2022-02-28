@@ -1,60 +1,49 @@
 const { createEvent, createIdentify, getMeta, resetMeta, clone } = require('@posthog/plugin-scaffold/test/utils')
 
-const { processEvent } = require('..')
+const { processEvent, setupPlugin } = require('..')
 
 beforeEach(() => {
     resetMeta({
         config: {
-            greeting: 'Dzień dobry!',
+            events: '$autocapture,CUSTOM_CLICK',
+        },
+        global: {
+            events: ['$autocapture', 'CUSTOM_CLICK'],
         },
     })
 })
 
-test('processEvent adds properties', async () => {
+test('processEvent filters events as wanted', async () => {
     // create a random event
-    const event0 = createEvent({ event: 'booking completed', properties: { amount: '20', currency: 'USD' } })
+    const event = createEvent({ event: '$autocapture', properties: { amount: '20', currency: 'USD' } })
 
     // must clone the event since `processEvent` will mutate it otherwise
-    const event1 = await processEvent(clone(event0), getMeta())
-    expect(event1).toEqual({
-        ...event0,
-        properties: {
-            ...event0.properties,
-            greeting: 'Dzień dobry!',
-            greeting_counter: 0,
-            random_number: 4,
-        },
-    })
+    const processedEvent = await processEvent(clone(event), getMeta())
+    expect(processedEvent).toBeNull()
 
-    const event2 = await processEvent(clone(event0), getMeta())
-    expect(event2).toEqual({
-        ...event1,
-        properties: {
-            ...event1.properties,
-            greeting_counter: 1,
-        },
-    })
+    // create an event that should NOT be filtered
+    event.event = 'random'
 
-    const event3 = await processEvent(clone(event0), getMeta())
-    expect(event3).toEqual({
-        ...event2,
-        properties: {
-            ...event2.properties,
-            greeting_counter: 2,
-        },
-    })
+    const processedEvent1 = await processEvent(clone(event), getMeta())
+    expect(processedEvent1).toEqual(event)
 })
 
 test('processEvent does not crash with identify', async () => {
-    const defaultHelloWorldProperties = Object.freeze({
-        greeting: 'Dzień dobry!',
-        greeting_counter: 0,
-        random_number: 4,
-    })
     // create a random event
     const event0 = createIdentify()
     // must clone the event since `processEvent` will mutate it otherwise
-    const { properties, ...restOfEvent1 } = await processEvent(clone(event0), getMeta())
-    expect(restOfEvent1).toEqual(event0)
-    expect(properties).toEqual(defaultHelloWorldProperties)
+    const event = await processEvent(clone(event0), getMeta())
+    expect(event).toEqual(event0)
+})
+
+test('setupPlugin works as expected', async () => {
+    let meta = {
+        config: {
+            events: '$autocapture,CUSTOM_CLICK',
+        },
+        global: {},
+    }
+
+    await setupPlugin(meta)
+    expect(meta.global.events).toEqual(['$autocapture', 'CUSTOM_CLICK'])
 })
